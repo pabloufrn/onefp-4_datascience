@@ -20,7 +20,7 @@ server = app.server
 mapbox_access_token = "pk.eyJ1IjoicGFibG9lbWFudWVsbCIsImEiOiJja2hzZmhzZDkwZnk3MzRvNWh1MzV4b2MyIn0.yQ_6iq1pk9DXqqFydgzCBg"
 
 # Localizações importantes
-# Código disponível em https://gist.github.com/ricardobeat/674646
+# Código retirado de https://gist.github.com/ricardobeat/674646
 list_of_locations = {
 	"AC": [-8.77, -70.55],
 	"AL": [-9.62, -36.82],
@@ -60,7 +60,6 @@ df = pd.read_csv(
 df.data_inversa = df.data_inversa.astype('datetime64')
 df['data'] = df.data_inversa.dt.strftime("%d/%m/%Y")
 df['horario'] = df.data_inversa.dt.strftime("%H:%M")
-print(df.horario.head())
 
 # Layout of Dash App
 app.layout = html.Div(
