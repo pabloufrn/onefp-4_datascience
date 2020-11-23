@@ -124,9 +124,12 @@ app.layout = html.Div(
                                                 {"label": i, "value": i}
                                                 for i in list_of_locations
                                             ],
-                                            placeholder="Selecione o estado",
+                                            placeholder="Selecione a UF",
                                         )
                                     ],
+                                ),
+                                html.Span(
+                                    "Obs.: A UF não afeta os dados apresentados"
                                 ),
                                 html.Div(
                                     className="div-for-dropdown",
@@ -142,7 +145,7 @@ app.layout = html.Div(
                                                 for n in range(24)
                                             ],
                                             multi=True,
-                                            placeholder="Selecione a localização",
+                                            placeholder="Selecione os horários",
                                         )
                                     ],
                                 ),
