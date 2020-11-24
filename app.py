@@ -423,7 +423,7 @@ def update_graph(startDatePicked, endDatePicked, selectedData, selectedLocation)
                         [1.0, "#613099"],
                     ],
                     colorbar=dict(
-                        title="Time of<br>Day",
+                        title="Horário",
                         x=0.93,
                         xpad=0,
                         nticks=24,
