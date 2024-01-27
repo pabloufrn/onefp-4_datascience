@@ -1,7 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import pandas as pd
+import pandas as pd, csv
 import numpy as np
 
 from dash.dependencies import Input, Output
@@ -54,12 +54,15 @@ list_of_locations = {
 # Initialize data frame
 df = pd.read_csv(
     "./data/acidentes.csv",
-    index_col='id'
+    index_col='id',
+    sep=";",
+    encoding="cp1252",
+    decimal=','
 )
 
-df.data_inversa = df.data_inversa.astype('datetime64')
+df.data_inversa = (df.data_inversa + ' ' + df.horario).astype('datetime64')
 df['data'] = df.data_inversa.dt.strftime("%d/%m/%Y")
-df['horario'] = df.data_inversa.dt.strftime("%H:%M")
+df['horah'] = df.data_inversa.dt.hour
 
 # Layout of Dash App
 app.layout = html.Div(
@@ -83,10 +86,10 @@ app.layout = html.Div(
                             children=[
                                 dcc.DatePickerSingle(
                                     id="start-date-picker",
-                                    min_date_allowed=dt(2020, 1, 1),
-                                    max_date_allowed=dt(2020, 9, 30),
-                                    initial_visible_month=dt(2020, 1, 1),
-                                    date=dt(2020, 1, 1).date(),
+                                    min_date_allowed=dt(2023, 1, 1),
+                                    max_date_allowed=dt(2023, 12, 31),
+                                    initial_visible_month=dt(2023, 1, 1),
+                                    date=dt(2023, 1, 1).date(),
                                     display_format="DD/MM/YYYY",
                                     style={"border": "0px solid black"},
                                 )
@@ -100,10 +103,10 @@ app.layout = html.Div(
                             children=[
                                 dcc.DatePickerSingle(
                                     id="end-date-picker",
-                                    min_date_allowed=dt(2020, 1, 1),
-                                    max_date_allowed=dt(2020, 9, 30),
-                                    initial_visible_month=dt(2020, 11, 20),
-                                    date=dt(2020, 11, 20).date(),
+                                    min_date_allowed=dt(2023, 1, 1),
+                                    max_date_allowed=dt(2023, 12, 31),
+                                    initial_visible_month=dt(2023, 12, 31),
+                                    date=dt(2023, 12, 31).date(),
                                     display_format="DD/MM/YYYY",
                                     style={"border": "0px solid black"},
                                 )
@@ -154,7 +157,7 @@ app.layout = html.Div(
                         html.P(id="total-acidentes-selection"),
                         dcc.Markdown(
                             children=[
-                                "Fonte: [Polícia Rodoviária Federal](https://antigo.prf.gov.br/dados-abertos-acidentes)  ",
+                                "Fonte: [Polícia Rodoviária Federal](https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf)  ",
                                 "Layout feito pela comunidade do Plotly, disponível na [Galeria do Dash](https://dash-gallery.plotly.host/Portal/)."
                             ]
                         ),
@@ -261,7 +264,7 @@ def update_valid_end_date(endDatePicked):
 def update_total_acidentes(startDatePicked, endDatePicked):
     start_date_picked = dt.strptime(startDatePicked, "%Y-%m-%d")
     end_date_picked = dt.strptime(endDatePicked, "%Y-%m-%d")
-    total = ((df.data_inversa >= start_date_picked) & (df.data_inversa <= end_date_picked)).sum()
+    total = ((df.data_inversa >= start_date_picked) & (df.data_inversa.dt.normalize() <= end_date_picked)).sum()
     return f"Número total de acidentes: {total}"
 
 
@@ -275,13 +278,12 @@ def update_total_acidentes_selection(startDatePicked, endDatePicked, selectedDat
     end_date_picked = dt.strptime(endDatePicked, "%Y-%m-%d")
     total = 0
     if(selectedData != None and selectedData != []):
-        total = ((df.data_inversa >= start_date_picked) & (df.data_inversa <= end_date_picked) & 
+        total = ((df.data_inversa >= start_date_picked) & (df.data_inversa.dt.normalize() <= end_date_picked) & 
         (df.data_inversa.dt.hour.isin(selectedData))).sum()
     else: 
-        total = ((df.data_inversa >= start_date_picked) & (df.data_inversa <= end_date_picked)).sum()
+        total = ((df.data_inversa >= start_date_picked) & (df.data_inversa.dt.normalize() <= end_date_picked)).sum()
     
     return f"Número total de acidentes nos horários selecionados: {total}"
-
 
 # Update Histogram Figure based on Month, Day and Times Chosen
 @app.callback(
@@ -293,7 +295,7 @@ def update_histogram(startDatePicked, endDatePicked, selectedData):
     start_date_picked = dt.strptime(startDatePicked, "%Y-%m-%d")
     end_date_picked = dt.strptime(endDatePicked, "%Y-%m-%d")
 
-    data = df[(df.data_inversa >= start_date_picked) & (df.data_inversa <= end_date_picked)]
+    data = df[(df.data_inversa >= start_date_picked) & (df.data_inversa.dt.normalize() <= end_date_picked)]
     if(selectedData != None and selectedData != []):
         data = data[data.data_inversa.dt.hour.isin(selectedData)]
 
@@ -379,7 +381,7 @@ def update_graph(startDatePicked, endDatePicked, selectedData, selectedLocation)
     start_date_picked = dt.strptime(startDatePicked, "%Y-%m-%d")
     end_date_picked = dt.strptime(endDatePicked, "%Y-%m-%d")
 
-    data = df[(df.data_inversa >= start_date_picked) & (df.data_inversa <= end_date_picked)]
+    data = df[(df.data_inversa >= start_date_picked) & (df.data_inversa.dt.normalize() <= end_date_picked)]
     if(selectedData != None and selectedData != []):
         data = data[data.data_inversa.dt.hour.isin(selectedData)]
 
@@ -401,8 +403,8 @@ def update_graph(startDatePicked, endDatePicked, selectedData, selectedLocation)
                     "Veiculos: %{customdata[11]}",
                 marker=dict(
                     showscale=True,
-                    color=pd.concat([pd.Series([0]), data.data_inversa.dt.hour,  pd.Series([23])]),
-                    opacity=0.5,
+                    color=data.data_inversa.dt.hour,
+                    opacity=0.6,
                     size=5,
                     colorscale=[
                         [0, "#F4EC15"],
@@ -461,9 +463,9 @@ def update_graph(startDatePicked, endDatePicked, selectedData, selectedLocation)
                             dict(
                                 args=[
                                     {
-                                        "mapbox.zoom": 12,
-                                        "mapbox.center.lon": "-73.991251",
-                                        "mapbox.center.lat": "40.7272",
+                                        "mapbox.zoom": 8,
+                                        "mapbox.center.lon": list_of_locations["RN"][1],
+                                        "mapbox.center.lat": list_of_locations["RN"][0],
                                         "mapbox.bearing": 0,
                                         "mapbox.style": "dark",
                                     }
@@ -492,4 +494,4 @@ def update_graph(startDatePicked, endDatePicked, selectedData, selectedLocation)
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=False, port=3000)

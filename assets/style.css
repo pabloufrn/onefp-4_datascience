@@ -104,11 +104,6 @@ a {
   border: 0.5px solid #dbdbdb44;
 }
 
-#date .invalid {
-  color: #f00;
-  border: 0.5px solid #f00;
-}
-
 #date-picker{
   width: 100%;
 }
